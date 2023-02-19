@@ -1,15 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[12]:
-
-
 import os
 import argparse
-
-
-# In[13]:
-
 
 class IMEM(object):
     def __init__(self, iodir):
@@ -30,10 +20,6 @@ class IMEM(object):
             return self.instructions[idx]
         else:
             print("IMEM - ERROR: Invalid memory access at index: ", idx, " with memory size: ", self.size)
-
-
-# In[14]:
-
 
 class DMEM(object):
     # Word addressible - each address contains 32 bits.
@@ -66,7 +52,7 @@ class DMEM(object):
         for idx, i in enumerate(val):
             f.write(str(self.data))
         f.close()
-    
+
     def dump(self):
         try:
             with open(self.opfilepath, 'w') as opf:
@@ -75,10 +61,6 @@ class DMEM(object):
             print(self.name, "- Dumped data into output file in path:", self.opfilepath)
         except:
             print(self.name, "- ERROR: Couldn't open output file in path:", self.opfilepath)
-
-
-# In[15]:
-
 
 class RegisterFile(object):
     def __init__(self, name, count, length = 1, size = 32):
@@ -95,13 +77,13 @@ class RegisterFile(object):
             return self.data(idx)
         else:
             f = open("VDMEM.txt", "r")
-        
+
     def Write(self, idx, val):
         f = open("VDMEM.txt", "w")
         for idx, i in enumerate(val):
             f.write(str(self.registers))
         f.close()
-        
+
     def dump(self, iodir):
         opfilepath = os.path.abspath(os.path.join(iodir, self.name + ".txt"))
         try:
@@ -114,10 +96,6 @@ class RegisterFile(object):
         except:
             print(self.name, "- ERROR: Couldn't open output file in path:", opfilepath)
 
-
-# In[16]:
-
-
 class Core():
     def __init__(self, imem, sdmem, vdmem):
         self.IMEM = imem
@@ -126,14 +104,9 @@ class Core():
 
         self.RFs = {"SRF": RegisterFile("SRF", 8),
                     "VRF": RegisterFile("VRF", 8, 64)}
-
-    def SingleStageCore(Core):
-        def __init__(self, imem, sdmem, vdmem):
-            super(SingleStageCore, self)
-            self.opfilepath = {"SDMEMOP": RegisterFile("SDMEMOP", 64),
-                               "VDMEMOP": RegisterFile("VDMEMOP")}
-            self.pc = 0
-            
+        
+        # Your code here.
+        
     def run(self):
         while not self.__done:
             self.run()
@@ -143,10 +116,6 @@ class Core():
     def dumpregs(self, iodir):
         for rf in self.RFs.values():
             rf.dump(iodir)
-
-
-# In[17]:
-
 
 if __name__ == "__main__":
     #parse arguments for input file location
@@ -175,10 +144,3 @@ if __name__ == "__main__":
     vdmem.dump()
 
     # THE END
-
-
-# In[ ]:
-
-
-
-
