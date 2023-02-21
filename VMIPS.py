@@ -106,6 +106,8 @@ class Core():
 
         self.RFs = {"SRF": RegisterFile("SRF", 8),
                     "VRF": RegisterFile("VRF", 8, 64)}
+        
+        self._VMR = [1 for _ in range(64)]
 
         self.__ISET = INSTRUCTION_SET
         self._pc = 0
@@ -127,10 +129,10 @@ class Core():
         else:
             self._pc += i
 
-    def _register_read(self, RTYPE, R):
+    def _register_read(self, R):
         pass
 
-    def _register_write(self, RTYPE, R, val):
+    def _register_write(self, R, val):
         pass
 
     @property
