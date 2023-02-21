@@ -1,3 +1,5 @@
+import functools
+
 INSTRUCTION_SET = dict()
 
 def InstructionWrap(ITYPE, I):
@@ -80,19 +82,21 @@ INSTRUCTION_SET["SLEVV"] = InstructionWrap("LE", SVMROVV)
 
 # Vector Mask Register Operations - VS
 def SVMROVS(VMRO, self, VR1, SR1):
+    VR1, SR1 = self._read_register(VR1), self._read_register(SR1)
+    list(map(lambda vr_i: 1 if vr_i == SR1 else 0, VR1))
     match VMRO:
         case "EQ":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i == SR1 else 0, VR1))
         case "NE":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i != SR1 else 0, VR1))
         case "GT":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i > SR1 else 0, VR1))
         case "LT":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i < SR1 else 0, VR1))
         case "GE":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i >= SR1 else 0, VR1))
         case "LE":
-            pass
+            self._VMR = list(map(lambda vr_i: 1 if vr_i <= SR1 else 0, VR1))
     self._update_pc()
 
 INSTRUCTION_SET["SEQVS"] = InstructionWrap("EQ", SVMROVS)
@@ -104,14 +108,15 @@ INSTRUCTION_SET["SLEVS"] = InstructionWrap("LE", SVMROVS)
 
 # Vector Mask Register Operations - CVM
 def CVM(self):
+    self._VMR = [1 for _ in range(64)]
     self._update_pc()
-    pass
 INSTRUCTION_SET["CVM"] = CVM
 
 # Vector Mask Register Operations - POP
 def POP(self, SR1):
+    sum = functools.reduce(lambda acc, val: acc + val, self._VMR)
+    self._register_write(SR1, sum)
     self._update_pc()
-    pass
 INSTRUCTION_SET["POP"] = POP
 
 
@@ -122,14 +127,14 @@ INSTRUCTION_SET["POP"] = POP
 
 # Vector Length Register Operations - MTCL
 def MTCL(self, SR1):
+    self._VLR = self._register_read(SR1)
     self._update_pc()
-    pass
 INSTRUCTION_SET["MTCL"] = MTCL
 
 # Vector Length Register Operations - MFCL
 def MFCL(self, SR1):
+    self._register_write(SR1, self._VLR)
     self._update_pc()
-    pass
 INSTRUCTION_SET["MFCL"] = MFCL
 
 
@@ -228,20 +233,25 @@ INSTRUCTION_SET["SRA"] = InstructionWrap("SRA", SO)
 
 
 def B(OP, self, SR1, SR2, Imm):
+    SR1, SR2 = self._register_read(SR1), self._register_read(SR2)
+    flag = False
     match OP:
         case "EQ":
-            pass
+            flag = (SR1 == SR2)
         case "NE":
-            pass
+            flag = (SR1 != SR2)
         case "GT":
-            pass
+            flag = (SR1 > SR2)
         case "LT":
-            pass
+            flag = (SR1 < SR2)
         case "GE":
-            pass
+            flag = (SR1 >= SR2)
         case "LE":
-            pass
-    self._update_pc()
+            flag = (SR1 <= SR2)
+    if flag:
+        self._update_pc(Imm)
+    else:
+        self._update_pc()
 
 INSTRUCTION_SET["BEQ"] = InstructionWrap("EQ", B)
 INSTRUCTION_SET["BNE"] = InstructionWrap("NE", B)
