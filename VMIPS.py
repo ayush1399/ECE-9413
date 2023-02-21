@@ -12,17 +12,17 @@ class IMEM(object):
         try:
             with open(self.filepath, 'r') as insf:
                 self.instructions = [ins.strip() for ins in insf.readlines()]
-            print("IMEM - Instructions loaded from file:", self.filepath)
+            print("IMEM - Instructions loaded from file:{self.filepath}")
             # print("IMEM - Instructions:", self.instructions)
         except:
-            print("IMEM - ERROR: Couldn't open file in path:", self.filepath)
+            print("IMEM - ERROR: Couldn't open file in path:{self.filepath}")
 
     def Read(self, idx): # Use this to read from IMEM.
         if idx < self.size:
             return self.instructions[idx]
         else:
-            print("IMEM - ERROR: Invalid memory access at index: ", idx, " with memory size: ", self.size)
-# Segmentation fault (core dumped)
+            print(f"IMEM - ERROR: Invalid memory access at index: {idx} with memory size: {self.size}")
+
 class DMEM(object):
     # Word addressible - each address contains 32 bits.
     def __init__(self, name, iodir, addressLen):
@@ -37,17 +37,23 @@ class DMEM(object):
         try:
             with open(self.ipfilepath, 'r') as ipf:
                 self.data = [int(line.strip()) for line in ipf.readlines()]
-            print(self.name, "- Data loaded from file:", self.ipfilepath)
+            print(f"{self.name}- Data loaded from file:{self.ipfilepath}")
             # print(self.name, "- Data:", self.data)
             self.data.extend([0x0 for i in range(self.size - len(self.data))])
         except:
-            print(self.name, "- ERROR: Couldn't open input file in path:", self.ipfilepath)
+            print(f"{self.name}- ERROR: Couldn't open input file in path:{self.ipfilepath}")
 
     def Read(self, idx): # Use this to read from DMEM.
-        pass # Replace this line with your code here.
+        if 0 <= idx < self.size:
+            return self.register[idx]
+        else:
+            raise Exception(f"DMEM - ERROR: Invalid memory access at index: {idx} with memory size: {self.size}")
 
     def Write(self, idx, val): # Use this to write into DMEM.
-        pass # Replace this line with your code here.
+        if 0 <= idx < self.size:
+            self.data[idx] = val
+        else:
+            raise Exception(f"DMEM - ERROR: Invalid memory access at index: {idx} with memory size: {self.size}")
 
     def dump(self):
         try:
@@ -72,13 +78,13 @@ class RegisterFile(object):
         try:
             return self.registers[idx]
         except IndexError:
-            print(f"Invalid register read at index: {idx}")
+            raise Exception("Invalid register read.")
 
     def Write(self, idx, val):
         try:
             self.registers[idx] = val
         except IndexError:
-            print(f"Invalid register read at index: {idx}")
+            raise Exception("Invalid register write.")
 
     def dump(self, iodir):
         opfilepath = os.path.abspath(os.path.join(iodir, self.name + ".txt"))
@@ -106,7 +112,6 @@ class Core():
         
     def run(self):
         for INS, OPR in self.__exec:
-            print(INS)
             if OPR:
                 self[INS](self, *OPR)
             else:
