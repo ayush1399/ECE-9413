@@ -1,6 +1,8 @@
 import os
 import argparse
 
+from instructions import INSTRUCTION_SET
+
 class IMEM(object):
     def __init__(self, iodir):
         self.size = pow(2, 16) # Can hold a maximum of 2^16 instructions.
@@ -20,7 +22,7 @@ class IMEM(object):
             return self.instructions[idx]
         else:
             print("IMEM - ERROR: Invalid memory access at index: ", idx, " with memory size: ", self.size)
-
+# Segmentation fault (core dumped)
 class DMEM(object):
     # Word addressible - each address contains 32 bits.
     def __init__(self, name, iodir, addressLen):
@@ -104,18 +106,31 @@ class Core():
 
         self.RFs = {"SRF": RegisterFile("SRF", 8),
                     "VRF": RegisterFile("VRF", 8, 64)}
-        
-        # Your code here.
+
+        self.__ISET = INSTRUCTION_SET
+        self._pc = 0
         
     def run(self):
-        while not self.__done:
-            self.run()
-            self.dump()
-            self.stop()
+        for INS in self.__exec:
+            print(INS)
 
     def dumpregs(self, iodir):
         for rf in self.RFs.values():
             rf.dump(iodir)
+
+    @property
+    def __exec(self):
+        while self._pc is not None:
+            yield self.IMEM.Read(self._pc)
+
+    def __getattr__(self, name, *args):
+        try:
+            try:
+                self.__ISET[name](self, *args)
+            except KeyError:
+                raise AttributeError
+        except AttributeError:
+            print("Invalid instruction (core dumped)")
 
 if __name__ == "__main__":
     #parse arguments for input file location
