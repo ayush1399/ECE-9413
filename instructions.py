@@ -1,8 +1,8 @@
 INSTRUCTION_SET = dict()
 
 def InstructionWrap(ITYPE, I):
-    def WrappedI(**kwargs):
-        return I(ITYPE, **kwargs)
+    def WrappedI(*wargs):
+        return I(ITYPE, *wargs)
     return WrappedI
 
 
@@ -22,6 +22,7 @@ def VOVV(VO, self, VR1, VR2, VR3):
             pass
         case "DIV":
             pass
+    self._update_pc()
 
 INSTRUCTION_SET["ADDVV"] = InstructionWrap("ADD", VOVV)
 INSTRUCTION_SET["SUBVV"] = InstructionWrap("SUB", VOVV)
@@ -40,6 +41,7 @@ def VOVS(VO, self, VR1, VR2, SR1):
             pass
         case "DIV":
             pass
+    self._update_pc()
 
 INSTRUCTION_SET["ADDVS"] = InstructionWrap("ADD", VOVS)
 INSTRUCTION_SET["SUBVS"] = InstructionWrap("SUB", VOVS)
@@ -67,13 +69,14 @@ def SVMROVV(VMRO, self, VR1, VR2):
             pass
         case "LE":
             pass
+    self._update_pc()
 
-INSTRUCTION_SET["EQVV"] = InstructionWrap("EQ", SVMROVV)
-INSTRUCTION_SET["NEVV"] = InstructionWrap("NE", SVMROVV)
-INSTRUCTION_SET["GTVV"] = InstructionWrap("GT", SVMROVV)
-INSTRUCTION_SET["LTVV"] = InstructionWrap("LT", SVMROVV)
-INSTRUCTION_SET["GEVV"] = InstructionWrap("GE", SVMROVV)
-INSTRUCTION_SET["LEVV"] = InstructionWrap("LE", SVMROVV)
+INSTRUCTION_SET["SEQVV"] = InstructionWrap("EQ", SVMROVV)
+INSTRUCTION_SET["SNEVV"] = InstructionWrap("NE", SVMROVV)
+INSTRUCTION_SET["SGTVV"] = InstructionWrap("GT", SVMROVV)
+INSTRUCTION_SET["SLTVV"] = InstructionWrap("LT", SVMROVV)
+INSTRUCTION_SET["SGEVV"] = InstructionWrap("GE", SVMROVV)
+INSTRUCTION_SET["SLEVV"] = InstructionWrap("LE", SVMROVV)
 
 # Vector Mask Register Operations - VS
 def SVMROVS(VMRO, self, VR1, SR1):
@@ -90,21 +93,24 @@ def SVMROVS(VMRO, self, VR1, SR1):
             pass
         case "LE":
             pass
+    self._update_pc()
 
-INSTRUCTION_SET["EQVS"] = InstructionWrap("EQ", SVMROVS)
-INSTRUCTION_SET["NEVS"] = InstructionWrap("NE", SVMROVS)
-INSTRUCTION_SET["GTVS"] = InstructionWrap("GT", SVMROVS)
-INSTRUCTION_SET["LTVS"] = InstructionWrap("LT", SVMROVS)
-INSTRUCTION_SET["GEVS"] = InstructionWrap("GE", SVMROVS)
-INSTRUCTION_SET["LEVS"] = InstructionWrap("LE", SVMROVS)
+INSTRUCTION_SET["SEQVS"] = InstructionWrap("EQ", SVMROVS)
+INSTRUCTION_SET["SNEVS"] = InstructionWrap("NE", SVMROVS)
+INSTRUCTION_SET["SGTVS"] = InstructionWrap("GT", SVMROVS)
+INSTRUCTION_SET["SLTVS"] = InstructionWrap("LT", SVMROVS)
+INSTRUCTION_SET["SGEVS"] = InstructionWrap("GE", SVMROVS)
+INSTRUCTION_SET["SLEVS"] = InstructionWrap("LE", SVMROVS)
 
 # Vector Mask Register Operations - CVM
 def CVM(self):
+    self._update_pc()
     pass
 INSTRUCTION_SET["CVM"] = CVM
 
 # Vector Mask Register Operations - POP
 def POP(self, SR1):
+    self._update_pc()
     pass
 INSTRUCTION_SET["POP"] = POP
 
@@ -116,11 +122,13 @@ INSTRUCTION_SET["POP"] = POP
 
 # Vector Length Register Operations - MTCL
 def MTCL(self, SR1):
+    self._update_pc()
     pass
 INSTRUCTION_SET["MTCL"] = MTCL
 
 # Vector Length Register Operations - MFCL
 def MFCL(self, SR1):
+    self._update_pc()
     pass
 INSTRUCTION_SET["MFCL"] = MFCL
 
@@ -132,41 +140,49 @@ INSTRUCTION_SET["MFCL"] = MFCL
 
 # Memory Access Operations - 11
 def LV(self, VR1, SR1):
+    self._update_pc()
     pass
 INSTRUCTION_SET["LV"] = LV
 
 # Memory Access Operations - 12
 def SV(self, VR1, SR1):
+    self._update_pc()
     pass
 INSTRUCTION_SET["SV"] = SV
 
 # Memory Access Operations - 13
 def LVWS(self, VR1, SR1, SR2):
+    self._update_pc()
     pass
 INSTRUCTION_SET["LVWS"] = LVWS
 
 # Memory Access Operations - 14
 def SVWS(self, VR1, SR1, SR2):
+    self._update_pc()
     pass
 INSTRUCTION_SET["SVWS"] = SVWS
 
 # Memory Access Operations - 15
 def LVI(self, VR1, SR1, VR2):
+    self._update_pc()
     pass
 INSTRUCTION_SET["LVI"] = LVI
 
 # Memory Access Operations - 16
 def SVI(self, VR1, SR1, VR2):
+    self._update_pc()
     pass
 INSTRUCTION_SET["SVI"] = SVI
 
 # Memory Access Operations - 17
 def LS(self, VR1, SR1, Imm):
+    self._update_pc()
     pass
 INSTRUCTION_SET["LS"] = LS
 
 # Memory Access Operations - 18
 def SS(self, VR1, SR1, Imm):
+    self._update_pc()
     pass
 INSTRUCTION_SET["SS"] = SS
 
@@ -194,7 +210,8 @@ def SO(SOP, self, SR3, SR1, SR2):
             pass
         case "SRA":
             pass
-        
+    self._update_pc()
+
 INSTRUCTION_SET["ADD"] = InstructionWrap("ADD", SO)
 INSTRUCTION_SET["SUB"] = InstructionWrap("SUB", SO)
 INSTRUCTION_SET["AND"] = InstructionWrap("AND", SO)
@@ -224,6 +241,7 @@ def B(OP, self, SR1, SR2, Imm):
             pass
         case "LE":
             pass
+    self._update_pc()
 
 INSTRUCTION_SET["BEQ"] = InstructionWrap("EQ", B)
 INSTRUCTION_SET["BNE"] = InstructionWrap("NE", B)
@@ -239,5 +257,5 @@ INSTRUCTION_SET["BLE"] = InstructionWrap("LE", B)
 
 # Halt - 24
 def HALT(self):
-    pass
+    self._update_pc(None, True)
 INSTRUCTION_SET["HALT"] = HALT

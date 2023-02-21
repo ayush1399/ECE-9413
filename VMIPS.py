@@ -44,16 +44,10 @@ class DMEM(object):
             print(self.name, "- ERROR: Couldn't open input file in path:", self.ipfilepath)
 
     def Read(self, idx): # Use this to read from DMEM.
-        if idx < self.size:
-            return self.data(idx)
-        else:
-            f = open("SDMEM.txt", "r")
+        pass # Replace this line with your code here.
 
     def Write(self, idx, val): # Use this to write into DMEM.
-        f = open("SDMEM.txt", "w")
-        for idx, i in enumerate(val):
-            f.write(str(self.data))
-        f.close()
+        pass # Replace this line with your code here.
 
     def dump(self):
         try:
@@ -75,16 +69,16 @@ class RegisterFile(object):
         self.registers  = [[0x0 for e in range(self.vec_length)] for r in range(self.reg_count)] # list of lists of integers
 
     def Read(self, idx):
-        if idx < self.size:
-            return self.data(idx)
-        else:
-            f = open("VDMEM.txt", "r")
+        try:
+            return self.registers[idx]
+        except IndexError:
+            print(f"Invalid register read at index: {idx}")
 
     def Write(self, idx, val):
-        f = open("VDMEM.txt", "w")
-        for idx, i in enumerate(val):
-            f.write(str(self.registers))
-        f.close()
+        try:
+            self.registers[idx] = val
+        except IndexError:
+            print(f"Invalid register read at index: {idx}")
 
     def dump(self, iodir):
         opfilepath = os.path.abspath(os.path.join(iodir, self.name + ".txt"))
@@ -111,26 +105,41 @@ class Core():
         self._pc = 0
         
     def run(self):
-        for INS in self.__exec:
+        for INS, OPR in self.__exec:
             print(INS)
+            if OPR:
+                self[INS](self, *OPR)
+            else:
+                self[INS](self)
 
     def dumpregs(self, iodir):
         for rf in self.RFs.values():
             rf.dump(iodir)
 
+    def _update_pc(self, i=1, _set=False):
+        if _set:
+            self._pc = i
+        else:
+            self._pc += i
+
+    def _register_read(self, RTYPE, R):
+        pass
+
+    def _register_write(self, RTYPE, R, val):
+        pass
+
     @property
     def __exec(self):
         while self._pc is not None:
-            yield self.IMEM.Read(self._pc)
+            ins = self.IMEM.Read(self._pc).split(" ")
+            opr = ins[1:] if len(ins) > 1 else None
+            yield (ins[0], opr)
 
-    def __getattr__(self, name, *args):
+    def __getitem__(self, name):
         try:
-            try:
-                self.__ISET[name](self, *args)
-            except KeyError:
-                raise AttributeError
-        except AttributeError:
-            print("Invalid instruction (core dumped)")
+            return self.__ISET[name]
+        except KeyError:
+            print("Invalid instruction (core dumped)", name)
 
 if __name__ == "__main__":
     #parse arguments for input file location
