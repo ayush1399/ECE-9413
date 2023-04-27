@@ -21,6 +21,7 @@ def rrshift(val, n): return (val % 0x100000000) >> n
 
 # Vector Operations - VV
 def VOVV(VO, self, VR1, VR2, VR3):
+    ri = f"{VO}VV {VR1} {VR2} {VR3}"
     VLR = self._VLR
     VMR, VR2, VR3 = self._VMR[:VLR], self._register_read(VR2)[:VLR], self._register_read(VR3)[:VLR]
 
@@ -39,6 +40,7 @@ def VOVV(VO, self, VR1, VR2, VR3):
 
     self._register_write(VR1, VR1_MASKED)
     self._update_pc()
+    return ri
 
 INSTRUCTION_SET["ADDVV"] = InstructionWrap("ADD", VOVV)
 INSTRUCTION_SET["SUBVV"] = InstructionWrap("SUB", VOVV)
@@ -48,6 +50,7 @@ INSTRUCTION_SET["DIVVV"] = InstructionWrap("DIV", VOVV)
 
 # Vector Operations - VS
 def VOVS(VO, self, VR1, VR2, SR1):
+    ri = f"{VO}VS {VR1} {VR2} {SR1}"
     VLR = self._VLR
     VMR, VR2, SR1 = self._VMR[:VLR], self._register_read(VR2)[:VLR], self._register_read(SR1)
 
@@ -66,6 +69,7 @@ def VOVS(VO, self, VR1, VR2, SR1):
 
     self._register_write(VR1, VR1_MASKED)
     self._update_pc()
+    return ri
 
 INSTRUCTION_SET["ADDVS"] = InstructionWrap("ADD", VOVS)
 INSTRUCTION_SET["SUBVS"] = InstructionWrap("SUB", VOVS)
@@ -80,6 +84,7 @@ INSTRUCTION_SET["DIVVS"] = InstructionWrap("DIV", VOVS)
 
 # Vector Mask Register Operations - VV
 def SVMROVV(VMRO, self, VR1, VR2):
+    ri = "S{VMRO}VV {VR1} {VR2}"
     VR1, VR2 = self._register_read(VR1), self._register_read(VR2)
     match VMRO:
         case "EQ":
@@ -95,6 +100,7 @@ def SVMROVV(VMRO, self, VR1, VR2):
         case "LE":
             self._VMR = list(map(lambda vr_i: 1 if vr_i[0] <= vr_i[1] else 0, zip(VR1, VR2)))
     self._update_pc()
+    return ri
 
 INSTRUCTION_SET["SEQVV"] = InstructionWrap("EQ", SVMROVV)
 INSTRUCTION_SET["SNEVV"] = InstructionWrap("NE", SVMROVV)
@@ -105,6 +111,7 @@ INSTRUCTION_SET["SLEVV"] = InstructionWrap("LE", SVMROVV)
 
 # Vector Mask Register Operations - VS
 def SVMROVS(VMRO, self, VR1, SR1):
+    ri = f"S{VMRO}VS {VR1} {SR1}"
     VR1, SR1 = self._register_read(VR1), self._register_read(SR1)
     match VMRO:
         case "EQ":
@@ -120,6 +127,7 @@ def SVMROVS(VMRO, self, VR1, SR1):
         case "LE":
             self._VMR = list(map(lambda vr_i: 1 if vr_i <= SR1 else 0, VR1))
     self._update_pc()
+    return ri
 
 INSTRUCTION_SET["SEQVS"] = InstructionWrap("EQ", SVMROVS)
 INSTRUCTION_SET["SNEVS"] = InstructionWrap("NE", SVMROVS)
@@ -132,6 +140,7 @@ INSTRUCTION_SET["SLEVS"] = InstructionWrap("LE", SVMROVS)
 def CVM(self):
     self._VMR = [1 for _ in range(64)]
     self._update_pc()
+    return "CVM"
 INSTRUCTION_SET["CVM"] = CVM
 
 # Vector Mask Register Operations - POP
@@ -139,6 +148,7 @@ def POP(self, SR1):
     sum = functools.reduce(lambda acc, val: acc + val, self._VMR)
     self._register_write(SR1, sum)
     self._update_pc()
+    return f"POP {SR1}"
 INSTRUCTION_SET["POP"] = POP
 
 
@@ -151,12 +161,14 @@ INSTRUCTION_SET["POP"] = POP
 def MTCL(self, SR1):
     self._VLR = self._register_read(SR1)
     self._update_pc()
+    return "MTCL"
 INSTRUCTION_SET["MTCL"] = MTCL
 
 # Vector Length Register Operations - MFCL
 def MFCL(self, SR1):
     self._register_write(SR1, self._VLR)
     self._update_pc()
+    return "MFCL"
 INSTRUCTION_SET["MFCL"] = MFCL
 
 
@@ -168,79 +180,99 @@ INSTRUCTION_SET["MFCL"] = MFCL
 # Memory Access Operations - 11
 def LV(self, VR1, SR1):
     VLR, SR1 = self._VLR, self._register_read(SR1)
+    ri = f"LV {VR1} ({' '.join([str(SR1+idx) for idx in range(self._VLRMax)])})"
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+idx), range(VLR)))
     VMR = self._VMR[:VLR]
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
     self._update_pc()
+    return ri
 INSTRUCTION_SET["LV"] = LV
 
 # Memory Access Operations - 12
 def SV(self, VR1, SR1):
     VLR, SR1, VR1 = self._VLR, self._register_read(SR1), self._register_read(VR1)
+    ri = f"SV {VR1} ({' '.join([SR1+idx for idx in range(self._VLRMax)])})"
     VMR = self._VMR[:VLR]
     for idx in range(VLR):
         if VMR[idx]:
             self.VDMEM.Write(SR1+idx, VR1[idx])
     self._update_pc()
+    return ri
 INSTRUCTION_SET["SV"] = SV
 
 # Memory Access Operations - 13
 def LVWS(self, VR1, SR1, SR2):
+    ri = f"LVWS {VR1} "
     VLR, SR1, SR2 = self._VLR, self._register_read(SR1), self._register_read(SR2)
+    ri += f"({' '.join([str(SR1+i) for i in range(0, SR2 * self._VLRMax, SR2)])})"
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+idx), range(0, VLR, SR2)))
     VMR = self._VMR[:VLR]
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
     self._update_pc()
+    return ri
 INSTRUCTION_SET["LVWS"] = LVWS
 
 # Memory Access Operations - 14
 def SVWS(self, VR1, SR1, SR2):
+    ri = f"SVWS {VR1} "
     VLR, VR1 =  self._VLR, self._register_read(VR1) 
     SR1, SR2 = self._register_read(SR1), self._register_read(SR2)
+    ri += f"({' '.join([SR1+i for i in range(0, SR2 * self._VLRMax, SR2)])})"
     VMR = self._VMR[:VLR]
     for idx in range(VLR):
         if (VMR[idx]):
             self.VDMEM.Write(SR1+idx*SR2, VR1[idx])
     self._update_pc()
+    return ri
 INSTRUCTION_SET["SVWS"] = SVWS
 
 # Memory Access Operations - 15
 def LVI(self, VR1, SR1, VR2):
+    ri = f"LVI {VR1} "
     VLR, SR1, VR2 = self._VLR, self._register_read(SR1), self._register_read(VR2)
+    ri += f"({' '.join([str(SR1+i) for i in VR2])})"
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+VR2[idx]), range(VLR)))
     VMR = self._VMR[:VLR]
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
     self._update_pc()
+    return ri
 INSTRUCTION_SET["LVI"] = LVI
 
 # Memory Access Operations - 16
 def SVI(self, VR1, SR1, VR2):
+    ri = f"SVI {VR1} "
     VLR, VR1, SR1, VR2 = self._VLR, self._register_read(VR1), self._register_read(SR1), self._register_read(VR2)
+    ri += f"({' '.join([str(SR1+i) for i in VR2])})"
     VMR = self._VMR[:VLR]
     for idx in range(VLR):
         if (VMR[idx]):
             self.VDMEM.Write(SR1+VR2[idx], VR1[idx])
     self._update_pc()
+    return ri
 INSTRUCTION_SET["SVI"] = SVI
 
 # Memory Access Operations - 17
 def LS(self, SR2, SR1, Imm):
     SR1 = self._register_read(SR1)
+    ri = f"LS {SR2} ({SR1+int(Imm)})"
     self._register_write(SR2, self.SDMEM.Read(SR1 + int(Imm)))
     self._update_pc()
+    return ri
 INSTRUCTION_SET["LS"] = LS
 
 # Memory Access Operations - 18
 def SS(self, SR2, SR1, Imm):
     SR1, SR2 = self._register_read(SR1), self._register_read(SR2)
+    ri = f"SS {SR2} ({SR1+int(Imm)})"
     self.SDMEM.Write(SR1+int(Imm), SR2)
     self._update_pc()
+    return ri
 INSTRUCTION_SET["SS"] = SS
 
 
@@ -250,6 +282,7 @@ INSTRUCTION_SET["SS"] = SS
 
 
 def SO(SOP, self, SR3, SR1, SR2):
+    ri = f"{SOP} {SR3} {SR1} {SR2}"
     SR1, SR2 = self._register_read(SR1), self._register_read(SR2)
     match SOP:
         case "ADD":
@@ -270,6 +303,7 @@ def SO(SOP, self, SR3, SR1, SR2):
             sr3 = int32(SR1 >> SR2)
     self._register_write(SR3, sr3)
     self._update_pc()
+    return ri
 
 INSTRUCTION_SET["ADD"] = InstructionWrap("ADD", SO)
 INSTRUCTION_SET["SUB"] = InstructionWrap("SUB", SO)
@@ -303,9 +337,9 @@ def B(OP, self, SR1, SR2, Imm):
         case "LE":
             flag = (SR1 <= SR2)
     if flag:
-        self._update_pc(int(Imm))
+        return f"B ({self._update_pc(int(Imm))})"
     else:
-        self._update_pc()
+        return f"B ({self._update_pc()})"
 
 INSTRUCTION_SET["BEQ"] = InstructionWrap("EQ", B)
 INSTRUCTION_SET["BNE"] = InstructionWrap("NE", B)
@@ -322,4 +356,5 @@ INSTRUCTION_SET["BLE"] = InstructionWrap("LE", B)
 # Halt - 24
 def HALT(self):
     self._update_pc(None, True)
+    return "HALT"
 INSTRUCTION_SET["HALT"] = HALT
