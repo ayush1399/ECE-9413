@@ -180,9 +180,15 @@ INSTRUCTION_SET["MFCL"] = MFCL
 # Memory Access Operations - 11
 def LV(self, VR1, SR1):
     VLR, SR1 = self._VLR, self._register_read(SR1)
-    ri = f"LV {VR1} ({' '.join([str(SR1+idx) for idx in range(self._VLRMax)])})"
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+idx), range(VLR)))
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([str(SR1+idx) for idx in range(self._VLR)]):
+        if VMR[idx]:
+            calced.append(ele)
+    ri = f"LV {VR1} ({' '.join(calced)})"
+
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
@@ -193,8 +199,15 @@ INSTRUCTION_SET["LV"] = LV
 # Memory Access Operations - 12
 def SV(self, VR1, SR1):
     VLR, SR1, VR1 = self._VLR, self._register_read(SR1), self._register_read(VR1)
-    ri = f"SV {VR1} ({' '.join([SR1+idx for idx in range(self._VLRMax)])})"
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([SR1+idx for idx in range(self._VLR)]):
+        if VMR[idx]:
+            calced.append(ele)
+
+    ri = f"SV {VR1} ({' '.join(calced)})"
+
     for idx in range(VLR):
         if VMR[idx]:
             self.VDMEM.Write(SR1+idx, VR1[idx])
@@ -206,9 +219,16 @@ INSTRUCTION_SET["SV"] = SV
 def LVWS(self, VR1, SR1, SR2):
     ri = f"LVWS {VR1} "
     VLR, SR1, SR2 = self._VLR, self._register_read(SR1), self._register_read(SR2)
-    ri += f"({' '.join([str(SR1+i) for i in range(0, SR2 * self._VLRMax, SR2)])})"
+
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+idx), range(0, VLR, SR2)))
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([str(SR1+i) for i in range(0, SR2 * self._VLR, SR2)]):
+        if VMR[idx]:
+            calced.append(ele)
+    ri += f"({' '.join(calced)})"
+
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
@@ -221,8 +241,14 @@ def SVWS(self, VR1, SR1, SR2):
     ri = f"SVWS {VR1} "
     VLR, VR1 =  self._VLR, self._register_read(VR1) 
     SR1, SR2 = self._register_read(SR1), self._register_read(SR2)
-    ri += f"({' '.join([SR1+i for i in range(0, SR2 * self._VLRMax, SR2)])})"
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([SR1+i for i in range(0, SR2 * self._VLR, SR2)]):
+        if VMR[idx]:
+            calced.append(ele)
+    ri += f"({' '.join(calced)})"
+
     for idx in range(VLR):
         if (VMR[idx]):
             self.VDMEM.Write(SR1+idx*SR2, VR1[idx])
@@ -234,9 +260,15 @@ INSTRUCTION_SET["SVWS"] = SVWS
 def LVI(self, VR1, SR1, VR2):
     ri = f"LVI {VR1} "
     VLR, SR1, VR2 = self._VLR, self._register_read(SR1), self._register_read(VR2)
-    ri += f"({' '.join([str(SR1+i) for i in VR2])})"
     vr1 = list(map(lambda idx: self.VDMEM.Read(SR1+VR2[idx]), range(VLR)))
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([str(SR1+i) for i in VR2]):
+        if VMR[idx]:
+            calced.append(ele)
+    ri += f"({' '.join(calced)})"
+
     VR1_MASKED = self._register_read(VR1)[:VLR]
     VR1_MASKED = list(map(lambda vr: vr[2] if vr[1] else vr[0], zip(VR1_MASKED, VMR, vr1)))
     self._register_write(VR1, VR1_MASKED)
@@ -248,8 +280,14 @@ INSTRUCTION_SET["LVI"] = LVI
 def SVI(self, VR1, SR1, VR2):
     ri = f"SVI {VR1} "
     VLR, VR1, SR1, VR2 = self._VLR, self._register_read(VR1), self._register_read(SR1), self._register_read(VR2)
-    ri += f"({' '.join([str(SR1+i) for i in VR2])})"
     VMR = self._VMR[:VLR]
+
+    calced = []
+    for idx, ele in enumerate([str(SR1+i) for i in VR2]):
+        if VMR[idx]:
+            calced.append(ele)
+    ri += f"({' '.join(calced)})"
+
     for idx in range(VLR):
         if (VMR[idx]):
             self.VDMEM.Write(SR1+VR2[idx], VR1[idx])

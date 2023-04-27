@@ -114,7 +114,6 @@ class Core():
         
         self._VMR = [1 for _ in range(64)]
         self._VLR = 64
-        self._VLRMax = 64
 
         self.__ISET = INSTRUCTION_SET
         self._pc = 0
