@@ -11,11 +11,12 @@ class IMEM(object):
 
         try:
             with open(self.filepath, 'r') as insf:
-                self.instructions = [ins.strip() for ins in insf.readlines()]
-            print("IMEM - Instructions loaded from file:{self.filepath}")
+                # self.instructions = [ins.strip() for ins in insf.readlines()]
+                self.instructions = [ins.split('#')[0].strip() for ins in insf.readlines() if not (ins.startswith('#') or ins.strip() == '')]
+            print(f"IMEM - Instructions loaded from file:{self.filepath}")
             # print("IMEM - Instructions:", self.instructions)
         except:
-            print("IMEM - ERROR: Couldn't open file in path:{self.filepath}")
+            print(f"IMEM - ERROR: Couldn't open file in path:{self.filepath}")
 
     def Read(self, idx): # Use this to read from IMEM.
         if idx < self.size:
@@ -37,6 +38,7 @@ class DMEM(object):
         try:
             with open(self.ipfilepath, 'r') as ipf:
                 self.data = [int(line.strip()) for line in ipf.readlines()]
+                
             print(f"{self.name}- Data loaded from file:{self.ipfilepath}")
             # print(self.name, "- Data:", self.data)
             self.data.extend([0x0 for i in range(self.size - len(self.data))])
@@ -45,7 +47,7 @@ class DMEM(object):
 
     def Read(self, idx): # Use this to read from DMEM.
         if 0 <= idx < self.size:
-            return self.register[idx]
+            return self.data[idx]
         else:
             raise Exception(f"DMEM - ERROR: Invalid memory access at index: {idx} with memory size: {self.size}")
 
@@ -82,7 +84,9 @@ class RegisterFile(object):
 
     def Write(self, idx, val):
         try:
-            self.registers[idx] = val
+            register = self.registers[idx]
+            for i, v in enumerate(val):
+                register[i] = v
         except IndexError:
             raise Exception("Invalid register write.")
 
@@ -108,16 +112,20 @@ class Core():
                     "VRF": RegisterFile("VRF", 8, 64)}
         
         self._VMR = [1 for _ in range(64)]
+        self._VLR = 64
 
         self.__ISET = INSTRUCTION_SET
         self._pc = 0
         
     def run(self):
-        for INS, OPR in self.__exec:
-            if OPR:
-                self[INS](self, *OPR)
-            else:
-                self[INS](self)
+        try:
+            for INS, OPR in self.__exec:
+                if OPR:
+                    self[INS](self, *OPR)
+                else:
+                    self[INS](self)
+        except ValueError:
+            print(INS, OPR)
 
     def dumpregs(self, iodir):
         for rf in self.RFs.values():
@@ -130,10 +138,15 @@ class Core():
             self._pc += i
 
     def _register_read(self, R):
-        pass
-
+        if R[0] == "S":
+            return self.RFs["SRF"].Read(int(R[2:]))[0]
+        elif R[0] == "V":
+            return self.RFs["VRF"].Read(int(R[2:]))
     def _register_write(self, R, val):
-        pass
+        if R[0] == "S":
+            self.RFs["SRF"].Write(int(R[2:]), [val])
+        elif R[0] == "V":
+            self.RFs["VRF"].Write(int(R[2:]), val)
 
     @property
     def __exec(self):
