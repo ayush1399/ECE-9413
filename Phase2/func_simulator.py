@@ -1,7 +1,7 @@
 import os
 import argparse
 
-from instructions import INSTRUCTION_SET
+from finstructions import INSTRUCTION_SET
 
 class IMEM(object):
     def __init__(self, iodir):
@@ -13,7 +13,7 @@ class IMEM(object):
             with open(self.filepath, 'r') as insf:
                 # self.instructions = [ins.strip() for ins in insf.readlines()]
                 self.instructions = [ins.split('#')[0].strip() for ins in insf.readlines() if not (ins.startswith('#') or ins.strip() == '')]
-            print(f"IMEM - Instructions loaded from file:{self.filepath}")
+            print(f"IMEM   - Instructions loaded from file: {self.filepath}")
             # print("IMEM - Instructions:", self.instructions)
         except:
             print(f"IMEM - ERROR: Couldn't open file in path:{self.filepath}")
@@ -39,7 +39,7 @@ class DMEM(object):
             with open(self.ipfilepath, 'r') as ipf:
                 self.data = [int(line.strip()) for line in ipf.readlines()]
                 
-            print(f"{self.name}- Data loaded from file:{self.ipfilepath}")
+            print(f"{self.name} - Data loaded from file:          {self.ipfilepath}")
             # print(self.name, "- Data:", self.data)
             self.data.extend([0x0 for i in range(self.size - len(self.data))])
         except:
@@ -120,16 +120,30 @@ class Core():
         
     def run(self):
         resolved_flow = []
+        dynamicState = []
         try:
             for INS, OPR in self.__exec:
+
                 if OPR:
                     resolved_flow.append(self[INS](self, *OPR))
+                    dynamicState.append({
+                        "I": [INS] + OPR,
+                        "PC": self._pc,
+                        "VMR": self._VMR,
+                        "VLR": self._VLR
+                    })
                 else:
                     resolved_flow.append(self[INS](self))
+                    dynamicState.append({
+                        "I": [INS],
+                        "PC": self._pc,
+                        "VMR": self._VMR,
+                        "VLR": self._VLR
+                    })
         except ValueError as err:
             print(INS, OPR)
             return resolved_flow
-        return resolved_flow
+        return resolved_flow, dynamicState
 
     def dumpregs(self, iodir):
         for rf in self.RFs.values():
@@ -172,7 +186,11 @@ def get_control_flow(iodir):
     sdmem = DMEM("SDMEM", iodir, 13)
     vdmem = DMEM("VDMEM", iodir, 17)
     vcore = Core(imem, sdmem, vdmem)
-    return vcore.run()
+    r = vcore.run()
+    vcore.dumpregs(iodir)
+    sdmem.dump()
+    vdmem.dump()
+    return r
 
 if __name__ == "__main__":
     #parse arguments for input file location

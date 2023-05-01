@@ -3,11 +3,11 @@ dataQueueDepth = 4
 computeQueueDepth = 4
 
 # VDMEM LS parameters
-vdmNumBanks = 16
+vdmNumBanks = 1
 vlsPipelineDepth = 11
 
 # Compute Pipeline parameters
-numLanes = 4
+numLanes = 8
 pipelineDepthMul = 12
 pipelineDepthAdd = 2
 pipelineDepthDiv = 8
