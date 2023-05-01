@@ -18,7 +18,7 @@ This tool that models the data path and control path of a microarchitecture to p
 
 ### Test Cases
 
-Tests can be found in separate folders within tests/. The following tests are included:
+Tests can be found in separate folders within DotProduct and FullyConnected folders. The following tests are included:
 
 | Folder         | Description                          |
 | -------------- | ------------------------------------ |
